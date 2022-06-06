@@ -28,7 +28,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Pré-remplissage (optionnel)
 #  - Lien du cahier de prepa
-
 pre_url = "https://cahier-de-prepa.fr/bcpst1-pothier/"
 #  - Chemin du dossier de téléchargement
 pre_path = "dl"
@@ -38,8 +37,6 @@ pre_user = "alban.godier"
 pre_downloadAgain = False
 
 # Installe les modules nécessaires
-
-
 def installModules():
     from subprocess import Popen
     from sys import executable
@@ -355,8 +352,6 @@ class App(QApplication):
         exit()
 
 # Permet de télécharger tous les fichiers
-
-
 class Download(QObject):
     finished = Signal()
     progress = Signal(int)
@@ -540,8 +535,6 @@ class Output(QPlainTextEdit):
         exit()
 
 # Permet la séléction des matières à télécharger, éxécute ensuite la fonction startDownload de l'application
-
-
 class Selection(QWidget):
     def __init__(self, app: App, out: dict):
         super().__init__()
