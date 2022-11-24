@@ -1,5 +1,7 @@
 """
+
 ===============================================================================
+
 =                        Cahier de Prepa Downloader                           =
 =                                 De Oxybo                                    =
 =                     Basé sur cdpDumpingUtils de Azuxul                      =
@@ -24,19 +26,25 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# =============== CONFIGURATION ===============
+# ============================== CONFIGURATION ================================
 
 # Pré-remplissage (optionnel)
 #  - Lien du cahier de prepa
-pre_url = "https://cahier-de-prepa.fr/bcpst1-pothier/"
+pre_url = "https://cahier-de-prepa.fr/bcpst2-pothier/"
 #  - Chemin du dossier de téléchargement
-pre_path = "dl"
+pre_path = "Cahier de Prépa"
 #  - Nom d'utilisateur
-pre_user = "alban.godier"
+pre_user = "agodier"
+#  - Mot de passe
+pre_password = ""
 #  - Retélécharge tous les fichiers
 pre_downloadAgain = False
 
+# =========================== FIN DE CONFIGURATION ============================
+
 # Installe les modules nécessaires
+
+
 def installModules():
     from subprocess import Popen
     from sys import executable
@@ -52,6 +60,7 @@ try:
     from re import compile, search
     from os import path as osPath, mkdir, getcwd
     from time import time
+    from datetime import datetime
     from urllib3 import disable_warnings, exceptions
     from urllib.request import urlopen
     from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLineEdit, QCheckBox, QGridLayout, QPushButton, QPlainTextEdit, QSplitter, QProgressBar, QMessageBox, QTreeWidget, QTreeWidgetItem
@@ -91,6 +100,7 @@ except ImportError:
             from re import compile, search
             from os import path as osPath, mkdir, getcwd
             from time import time
+            from datetime import datetime
             from urllib3 import disable_warnings, exceptions
             from urllib.request import urlopen
             from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLineEdit, QCheckBox, QGridLayout, QPushButton, QPlainTextEdit, QSplitter, QProgressBar, QMessageBox, QTreeWidget, QTreeWidgetItem
@@ -163,8 +173,8 @@ class App(QApplication):
         self.session.post(url, data={'login': username, 'motdepasse': password, 'connexion': '1'}, verify=False)
 
         # Récupèration des informations de la page principale
-        self.page_soup = BeautifulSoup(self.connect(self.url), 'html.parser')
-        self.title = self.page_soup.find('title').text
+        self.page_soup = BeautifulSoup(self.connect(self.url + "/docs"), 'html.parser')
+        self.title = BeautifulSoup(self.connect(self.url), 'html.parser').find('title').text
 
         self.downloadPath = self.createDir(self.path, self.title)
         self.links = []
@@ -191,18 +201,11 @@ class App(QApplication):
     # Récupère des différentes matières sur la page principale
     def subjects(self):
         out = {}
-        nav = self.page_soup.find('div', id='menu')
-
-        tmp = nav.find_all('h3')
-        subjects = ['Documents à télécharger']
-        subjects = subjects + [tmp[i].text for i in range(len(tmp))]
-
-        urls = nav.find_all(text=compile('Documents à télécharger'))
-        urls = [urls[i].parent for i in range(len(urls))]
-        urls = [(self.url + urls[i]['href']) for i in range(len(urls))]
+        subjects = self.page_soup.find_all("p", class_="rep")
+        subjects = [subjects[i].find("a") for i in range(len(subjects))]
 
         for i in range(len(subjects)):
-            out[subjects[i]] = [urls[i], osPath.join(self.downloadPath, self.clear(subjects[i]))]
+            out[subjects[i].text] = [self.url + "/docs" + subjects[i]["href"], osPath.join(self.downloadPath, self.clear(subjects[i].text))]
 
         return out
 
@@ -256,6 +259,8 @@ class App(QApplication):
             self.download.error.connect(self.downloadError)
             self.download.moveToThread(self.downloadThread)
             self.downloadThread.start()
+        else:
+            self.downloadDone()
 
     # Récupère les fichiers dans un dossier et ses sous dossiers
     def extract(self, link, path):
@@ -265,8 +270,12 @@ class App(QApplication):
 
         section = sp.find('section')
 
-        docs = section.find_all('p', class_='doc')
-        reps = section.find_all('p', class_='rep')
+        if(section.find("h3", text="Documents récents")) :
+            docs = []
+            reps = section.find_all('p', class_='rep')
+        else :
+            docs = section.find_all('p', class_='doc')
+            reps = section.find_all('p', class_='rep')
 
         # Dans le cas d'un fichier
         for doc in docs:
@@ -283,8 +292,9 @@ class App(QApplication):
                     doc_link += '&dl'
                 # Teste si le fichier est déjà téléchargé et si le programme doit le retélécharger
                 if not osPath.exists(path + '\\' + name + '.' + ext) or self.downloadAgain:
-                    self.output.print("🔗 Nouveau lien : (" + path + '\\' + name + '.' + ext + ") " + doc_link)
+                    self.output.print("🔗 Nouveau lien : " + path + '\\' + name + '.' + ext + " (" + doc_link + ")")
                     self.links.append({"link": doc_link, "name": name, "ext": ext, "path": path})
+                    self.infos.updateFoundFiles()
                 else:
                     self.output.print("📄 Fichier extiste déjà : "+path + '\\' + name + '.' + ext)
 
@@ -327,21 +337,43 @@ class App(QApplication):
     # Executé par la class Download quand tous les fichiers ont été téléchargé
     def downloadDone(self):
         self.end_time = time()
-        unit = (1000000000 if (self.fullSize / (1000000000)) > 0.5 else
-                1000000 if (self.fullSize / (1000000)) > 0.5 else
-                1000 if (self.fullSize / (1000)) > 0.5 else
-                1)
 
-        self.output.print(
-            f"💯 Téléchargement terminé (" +
-            str(round(self.end_time - self.start_time, 2)) + "s / " +
-            str(round(self.fullSize / unit, 2)) + (
-                ' Go' if unit == 1000000000 else
-                ' Mo' if unit == 1000000 else
-                ' Ko' if unit == 1000 else
-                ' o')+")"
-        )
+        d_time = round(self.end_time - self.start_time, 2)
+
+        sizeUnit = (1000000000 if (self.fullSize / (1000000000)) > 0.5 else
+                    1000000 if (self.fullSize / (1000000)) > 0.5 else
+                    1000 if (self.fullSize / (1000)) > 0.5 else
+                    1)
+        timeUnit = (86400 if (d_time / (86400)) > 0.5 else
+                    3600 if (d_time / (3600)) > 0.5 else
+                    60 if (d_time / 60) > 0.5 else
+                    1)
+
+        time_ = str(round(d_time / timeUnit, 2)) + (
+            ' Jours' if timeUnit == 86400 else
+            ' Heures' if timeUnit == 3600 else
+            ' Minutes' if timeUnit == 60 else
+            ' Secondes')
+        size = str(round(self.fullSize / sizeUnit, 2)) + (
+            ' Go' if sizeUnit == 1000000000 else
+            ' Mo' if sizeUnit == 1000000 else
+            ' Ko' if sizeUnit == 1000 else
+            ' o')
+
+        self.output.print(f"💯 Téléchargement terminé ({time_} / {size})")
         self.infos.progress.setValue(100)
+        with open(self.downloadPath + "/infos.txt", "w", encoding="utf-8") as f:
+            now = datetime.now()
+            f.write("\n".join([
+                f"==================================================",
+                f"=                 CdP Downloader                 =",
+                f"=                   By Alban G.                  =",
+                f"==================================================",
+                f"",
+                f"Dernière mise à jour : {str(now.day)}/{str(now.month)}/{str(now.year)} {str(now.hour)}:{str(now.minute)}:{str(now.second)}",
+                f"Temps écoulé : {time_}",
+                f"Données téléchargées : {size}"
+            ]))
 
     # Exécuté par la class Download quand il y a une erreur de téléchargement
     def downloadError(self):
@@ -352,6 +384,8 @@ class App(QApplication):
         exit()
 
 # Permet de télécharger tous les fichiers
+
+
 class Download(QObject):
     finished = Signal()
     progress = Signal(int)
@@ -413,6 +447,7 @@ class Input(QWidget):
         self.WPassword.setPlaceholderText("Mot de passe")
         self.WPassword.setEchoMode(QLineEdit.Password)
         self.WPassword.setStyleSheet('lineedit-password-character: 9679')
+        self.WPassword.setText(pre_password)
         self.WPassword.returnPressed.connect(self.submit)
 
         self.downloadAgain = QCheckBox()
@@ -443,7 +478,7 @@ class Input(QWidget):
             path = getcwd()
             self.destroy(True)
         elif not osPath.exists(path):
-            QMessageBox.critical(title="Erreur", message="Le chemin du dossier de téléchargement ne pointe vers rien")
+            QMessageBox.critical(self, "Erreur", "Le chemin du dossier de téléchargement ne pointe vers rien")
         else:
             self.destroy(True)
         self.app.start(url, path, username, password, self.downloadAgain.isChecked())
@@ -460,6 +495,7 @@ class Infos(QWidget):
         # Définit la progression au minimum pour que la barre de soit pas vide
         self.progress.setValue(0)
 
+        self.foundFiles = QTreeWidgetItem(["Fichiers trouvés", "0"])
         self.files = QTreeWidgetItem(["Fichiers téléchargés", "0"])
         self.data = QTreeWidgetItem(["Données téléchargées", "0 o"])
         self.time = QTreeWidgetItem(["Temps écoulé", "0 s"])
@@ -469,6 +505,7 @@ class Infos(QWidget):
         self.table.setHeaderLabels(["Nom", "Valeur"])
         self.table.setColumnCount(2)
         self.table.resizeColumnToContents(0)
+        self.table.addTopLevelItem(self.foundFiles)
         self.table.addTopLevelItem(self.files)
         self.table.addTopLevelItem(self.data)
         self.table.addTopLevelItem(self.time)
@@ -478,7 +515,7 @@ class Infos(QWidget):
         self._layout.addWidget(self.progress)
         self._layout.addWidget(self.table)
         self.setLayout(self._layout)
-        self.setMinimumHeight(160)
+        self.setMinimumHeight(170)
 
     def newFile(self):
         fullSizeUnit = (1000000000 if (self.app.fullSize / 1000000000) > 1 else
@@ -514,6 +551,9 @@ class Infos(QWidget):
         ))
         self.progress.setValue(int(self.app.fileCounter/self.app.linksLenght*100))
 
+    def updateFoundFiles(self):
+        self.foundFiles.setText(1, str(len(self.app.links)))
+
 
 class Output(QPlainTextEdit):
     def __init__(self, app: App):
@@ -535,6 +575,8 @@ class Output(QPlainTextEdit):
         exit()
 
 # Permet la séléction des matières à télécharger, éxécute ensuite la fonction startDownload de l'application
+
+
 class Selection(QWidget):
     def __init__(self, app: App, out: dict):
         super().__init__()
