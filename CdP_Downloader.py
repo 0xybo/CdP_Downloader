@@ -30,11 +30,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Pré-remplissage (optionnel)
 #  - Lien du cahier de prepa
-pre_url = "https://cahier-de-prepa.fr/bcpst2-pothier/"
+pre_url = ""
 #  - Chemin du dossier de téléchargement
-pre_path = "Cahier de Prépa"
+pre_path = "download"
 #  - Nom d'utilisateur
-pre_user = "agodier"
+pre_user = ""
 #  - Mot de passe
 pre_password = ""
 #  - Retélécharge tous les fichiers
@@ -429,7 +429,7 @@ class Input(QWidget):
         self.setMinimumWidth(600)
 
         self.WUrl = QLineEdit()
-        self.WUrl.setPlaceholderText("Lien du cahier de prepa")
+        self.WUrl.setPlaceholderText("Lien du cahier de prepa (ex: https://cahier-de-prepa.fr/bcpst")
         self.WUrl.setText(pre_url)
         self.WUrl.returnPressed.connect(self.submit)
 
