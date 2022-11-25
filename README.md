@@ -9,11 +9,11 @@
 
 ## Comment fonctionne le programme ?
 
-- On commence par faire une requête d'authentification au serveur
-- On charge la page de documents présente à l'URL `/docs` afin de récupérer une liste des matières
-- On charge la page de documents d'une matière pour récupérer les sous-dossiers et les fichiers
-- On réitère la dernière étape avec les sous-dossiers pour déterminer l'arborescence des fichiers
-- On télécharge les fichiers à partir des liens récupérés
+- Commence par faire une requête d'authentification au serveur
+- Charge la page de documents présente à l'URL `/docs` afin de récupérer une liste des matières
+- Charge la page de documents d'une matière pour récupérer les sous-dossiers et les fichiers
+- Réitère la dernière étape avec les sous-dossiers pour déterminer l'arborescence des fichiers
+- Télécharge les fichiers à partir des liens récupérés
 
 ## Requis
 
