@@ -21,7 +21,7 @@
 
 ## Usage
 
-> Pour les utilisateurs de Windows, vous pouvez utiliser l'exécutable [`CdP_Downloader.exe`](https://github.com/0xybo/CdP_Downloader/releases/latest/download/CdP_Downloader.exe).
+> Pour les utilisateurs de Windows, vous pouvez utiliser l'exécutable [`CdP_Downloader.exe`](https://github.com/0xybo/CdP_Downloader/releases/latest/download/CdP_Downloader.exe) (Il inclut Python et les librairies nécessaires à son fonctionnement, d'où sa taille, mais n'apporte rien de plus que le script Python).
 
 - Télécharger [`CdP_Downloader.py`](https://github.com/0xybo/CdP_Downloader/releases/latest/download/CdP_Downloader.py).
 - Ouvrir une fenêtre de terminal (cmd, shell) et exécuter `python CdP_Downloader.py` ou `py CdP_Downloader.py`
