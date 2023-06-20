@@ -279,8 +279,9 @@ class App(QApplication):
 
         section = sp.find('section')
 
-        if(section.find("h3", text="Documents récents")) :
-            docs = []
+        recents = section.find("h3", text="Documents récents")
+        if(recents):
+            docs = recents.find_previous_siblings('p', class_='doc')
             reps = section.find_all('p', class_='rep')
         else :
             docs = section.find_all('p', class_='doc')
