@@ -68,6 +68,7 @@ try:
     from bs4 import BeautifulSoup
     from re import compile, search
     from os import path as osPath, mkdir, getcwd
+    from sys import exit
     from time import time
     from datetime import datetime
     from urllib3 import disable_warnings, exceptions
@@ -108,6 +109,7 @@ except ImportError:
             from bs4 import BeautifulSoup
             from re import compile, search
             from os import path as osPath, mkdir, getcwd
+            from sys import exit
             from time import time
             from datetime import datetime
             from urllib3 import disable_warnings, exceptions
@@ -224,7 +226,7 @@ class App(QApplication):
         if r.ok:
             return r.text
         else:
-            QMessageBox.critical(title="Erreur de connection", message="Un problème avec l'adresse ou un soucis de connexion s'est produit . Veuillez réessayer : " + link)
+            QMessageBox.critical(self.window, "Erreur de connection", "Un problème avec l'adresse ou un soucis de connexion s'est produit . Veuillez réessayer : " + link)
             exit()
 
     # Executé par la class Selection
@@ -612,7 +614,7 @@ class Selection(QWidget):
         self.WSelectAll.clicked.connect(self.submitAll)
         # Quit le programme
         self.WCancel = QPushButton("Annuler")
-        self.WCancel.clicked.connect(quit)
+        self.WCancel.clicked.connect(exit)
 
         self._layout.addWidget(self.WSelectAll)
         self._layout.addWidget(self.WCancel)
