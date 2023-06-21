@@ -1,7 +1,3 @@
-> ⚠️ Actuelement, cette version ne fonctionne pas, une erreur se produit lors de l'execution du programme .exe à cause de la fonction `QMessageBox.critical`.
-
-
-
 Version du fichier `CdP_Downloader.py` présent dans le dossier parent avec les modifications:
 
 - Retrait de l'installation automatique des modules manquants, les modules sont importés directement (lignes 57 à 122)
